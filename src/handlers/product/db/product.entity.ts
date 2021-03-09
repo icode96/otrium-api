@@ -1,17 +1,15 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Unique,
   Column,
-  OneToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm'
 import Brand from './brand.entity'
 
 @Entity()
-@Unique(['slug'])
 class Product {
   @PrimaryGeneratedColumn()
   id: number
@@ -19,13 +17,13 @@ class Product {
   @Column()
   name: string
 
-  @Column()
+  @Column({ unique: true })
   slug: string
 
   @Column()
   sku: string
 
-  @OneToOne(() => Brand)
+  @ManyToOne(() => Brand)
   @JoinColumn()
   brand: Brand
 

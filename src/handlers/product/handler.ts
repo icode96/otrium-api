@@ -1,4 +1,6 @@
+import * as fs from 'fs'
 import * as express from 'express'
+import * as csvParser from 'csv-parse'
 import { throwError } from '@/libs/utils/error'
 import {
   HICreateBrand,
@@ -58,6 +60,57 @@ const handler = {
 
       const { id }: HRCreateProduct = await ProductRepository().save(payload)
       res.status(200).json({ id })
+    } catch (error) {
+      const errorCode = throwError(error?.errorCode, error, true)
+      res.status(500).json(errorCode)
+    }
+  },
+
+  /**
+   * @handler Create Product Bulk with CSV
+   * @param req
+   * @param res
+   * @returns { res: [HRCreateProduct] }
+   */
+  async createProductBulk(req: express.Request, res: express.Response): Promise<void> {
+    try {
+      const { file } = req
+
+      const csvData = []
+      await new Promise((resolve) => {
+        fs.createReadStream(file.path)
+          .pipe(csvParser())
+          .on('data', (data) => {
+            csvData.push(data)
+          })
+          .on('end', resolve)
+      })
+      csvData.shift()
+      fs.unlinkSync(file.path)
+
+      const brandIDs = csvData.map(([_, __, ___, brandId]) => brandId)
+      const uniqueBrandIDs = [...new Set(brandIDs)]
+      const brands = await BrandRepository().findByIds(uniqueBrandIDs)
+
+      if (uniqueBrandIDs.length !== brands.length) {
+        throwError('ER.P.001', `Invalid brandId contains`)
+      }
+
+      const brandRepo = {}
+      uniqueBrandIDs.forEach((_, index) => {
+        brandRepo[index] = brands[index]
+      })
+
+      const products = csvData.map(([name, slug, sku, brandId]) => ({
+        name,
+        slug,
+        sku,
+        brand: brandRepo[brandId],
+      }))
+
+      const createdProducts = await ProductRepository().save(products)
+      const productIds: Array<number> = createdProducts.map(({ id }) => id)
+      res.status(200).json({ id: productIds })
     } catch (error) {
       const errorCode = throwError(error?.errorCode, error, true)
       res.status(500).json(errorCode)

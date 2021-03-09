@@ -1,16 +1,19 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as fs from 'fs'
 import * as express from 'express'
 import * as csvParser from 'csv-parse'
-import { throwError } from '@/libs/utils/error'
+import { throwError, throwErrorQL } from '@/libs/utils/error'
 import {
   HICreateBrand,
   HRCreateBrand,
   HICreateProduct,
+  HIGetProduct,
   HIUpdateProduct,
   HRCreateProduct,
   HRGetProduct,
 } from './handler.d'
 import { ProductRepository, BrandRepository } from './db'
+import Brand from './db/brand.entity'
 
 const handler = {
   /**
@@ -63,6 +66,34 @@ const handler = {
     } catch (error) {
       const errorCode = throwError(error?.errorCode, error, true)
       res.status(500).json(errorCode)
+    }
+  },
+
+  /**
+   * @handler Create Product v2.0
+   * @param { HICreateProduct }
+   * @returns { HRCreateProduct }
+   */
+  async createProduct_2_0(payload: HICreateProduct): Promise<HRCreateProduct> {
+    try {
+      const { name, slug, sku, brandId }: HICreateProduct = payload
+
+      const brand = await BrandRepository().findOne(brandId)
+      if (!brand) {
+        throwErrorQL('ER.P.001', `Invalid brandId: ${brandId}`)
+      }
+
+      const dataset = {
+        name,
+        slug,
+        sku,
+        brand,
+      }
+
+      const { id }: HRCreateProduct = await ProductRepository().save(dataset)
+      return { id }
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
     }
   },
 
@@ -147,6 +178,32 @@ const handler = {
   },
 
   /**
+   * @handler Get Products v2.0
+   * @returns { [HRGetProduct] }
+   */
+  async getProducts_2_0(): Promise<Array<HRGetProduct>> {
+    try {
+      const data = await ProductRepository().find({ relations: ['brand'] })
+
+      const products: Array<HRGetProduct> = data.map((product) => ({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        sku: product.sku,
+        brand: {
+          id: product.brand?.id,
+          name: product.brand?.name,
+          code: product.brand?.code,
+        },
+      }))
+
+      return products
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
+    }
+  },
+
+  /**
    * @handler Get Product
    * @param req
    * @param res
@@ -195,6 +252,45 @@ const handler = {
   },
 
   /**
+   * @handler Get Product v2.0
+   * @param { HIGetProduct }
+   * @returns { HRGetProduct }
+   */
+  async getProduct_2_0(query: HIGetProduct): Promise<HRGetProduct> {
+    try {
+      const [data] = await ProductRepository().find({
+        where: JSON.parse(JSON.stringify(query)),
+        join: {
+          alias: 'product',
+          leftJoinAndSelect: {
+            brand: 'product.brand',
+          },
+        },
+      })
+
+      if (!data) {
+        throwErrorQL('ER.P.003', `Invalid productId or slug: {${JSON.stringify(query)}}`)
+      }
+
+      const product: HRGetProduct = {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        sku: data.sku,
+        brand: {
+          id: data.brand?.id,
+          name: data.brand?.name,
+          code: data.brand?.code,
+        },
+      }
+
+      return product
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
+    }
+  },
+
+  /**
    * @handler Delete Product
    * @param req
    * @param res
@@ -217,6 +313,25 @@ const handler = {
   },
 
   /**
+   * @handler Delete Product v2.0
+   * @param { id: number }
+   * @returns { boolean }
+   */
+  async deleteProduct_2_0(id: number): Promise<boolean> {
+    try {
+      const isProductExist = await ProductRepository().findOne(id)
+      if (!isProductExist) {
+        throwErrorQL('ER.P.002', `Invalid productId: ${id}`)
+      }
+
+      await ProductRepository().delete(id)
+      return true
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
+    }
+  },
+
+  /**
    * @handler Update Product
    * @param req
    * @param res
@@ -231,13 +346,51 @@ const handler = {
         throwError('ER.P.002', `Invalid productId: ${id}`)
       }
 
-      const changes = JSON.parse(JSON.stringify({ id, name, slug, sku, brandId }))
+      let brand: Brand
+      if (brandId) {
+        brand = await BrandRepository().findOne(brandId)
+        if (!brand) {
+          throwErrorQL('ER.P.001', `Invalid brandId: ${brandId}`)
+        }
+      }
+
+      const changes = JSON.parse(JSON.stringify({ id, name, slug, sku, brand }))
       await ProductRepository().update(id, changes)
 
       res.status(200).send()
     } catch (error) {
       const errorCode = throwError(error?.errorCode, error, true)
       res.status(500).json(errorCode)
+    }
+  },
+
+  /**
+   * @handler Delete Product v2.0
+   * @param { HIUpdateProduct }
+   * @returns { boolean }
+   */
+  async updateProduct_2_0(payload: HIUpdateProduct): Promise<boolean> {
+    try {
+      const { id, name, slug, sku, brandId } = payload
+
+      const isProductExist = await ProductRepository().findOne(id)
+      if (!isProductExist) {
+        throwErrorQL('ER.P.002', `Invalid productId: ${id}`)
+      }
+
+      let brand: Brand
+      if (brandId) {
+        brand = await BrandRepository().findOne(brandId)
+        if (!brand) {
+          throwErrorQL('ER.P.001', `Invalid brandId: ${brandId}`)
+        }
+      }
+
+      const changes = JSON.parse(JSON.stringify({ id, name, slug, sku, brand }))
+      await ProductRepository().update(id, changes)
+      return true
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
     }
   },
 }

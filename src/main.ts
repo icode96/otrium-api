@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import server from './server'
 
 const { PORT } = process.env

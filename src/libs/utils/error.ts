@@ -24,3 +24,19 @@ export const throwError = (errorCode: TErrorCode = 'ER.G.001', error?: any, resp
 
   throw { errorCode }
 }
+
+export const throwErrorQL = (gqlCode: TErrorCode = 'ER.G.001', error?: any, server = false) => {
+  if (process.env.NODE_ENV === 'development' && typeof error !== 'undefined') {
+    // Unknown error thrown some a service unexpectedly
+    if (gqlCode === 'ER.G.001' && server === true) {
+      console.info('Unexpected Error:', error)
+    }
+
+    // Know error with code - thown by a handler
+    if (server === false) {
+      console.info('Known Error:', gqlCode, error)
+    }
+  }
+
+  throw server ? Error(gqlCode) : { gqlCode }
+}

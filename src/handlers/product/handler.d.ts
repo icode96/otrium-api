@@ -1,10 +1,10 @@
-declare type Brand = {
+export type TBrand = {
   name: string
   code: string
 }
 
 // HI: HandlerInput
-export type HICreateBrand = Brand
+export type HICreateBrand = TBrand
 
 export interface HICreateProduct {
   name: string
@@ -14,16 +14,16 @@ export interface HICreateProduct {
 }
 
 export interface HIGetProduct {
-  id?: string
+  id?: number
   slug?: string
 }
 
 export interface HIUpdateProduct {
-  id: string
+  id: number
   name?: string
   slug?: string
   sku?: string
-  brandId: number
+  brandId?: number
 }
 
 // HI: HandlerResponse
@@ -40,5 +40,5 @@ export interface HRGetProduct {
   name: string
   slug: string
   sku: string
-  brand: Brand & { id: number }
+  brand: TBrand & { id: number }
 }

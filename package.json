@@ -4,8 +4,7 @@
   "author": "naveen <naveen.rajapaksa@gmail.com>",
   "main": "src/main.js",
   "scripts": {
-    "start": "npm run build && node -r ./module-mapper.js dist/src/main.js",
-    "start:dev": "nodemon --exec 'ts-node -r tsconfig-paths/register' src/main.ts ",
+    "start": "nodemon --exec 'ts-node -r tsconfig-paths/register' src/main.ts ",
     "build": "rm -rf dist && tsc",
     "lint": "tsc --noEmit && eslint \"src/**/*.{js,ts}\" --quiet --fix",
     "prettier": "prettier --write 'src/**/*.{js,ts}'"
@@ -14,6 +13,7 @@
   "dependencies": {
     "apollo-server-express": "^2.21.1",
     "body-parser": "^1.19.0",
+    "class-validator": "^0.13.1",
     "csv-parse": "^4.15.3",
     "express": "^4.17.1",
     "graphql": "^15.5.0",

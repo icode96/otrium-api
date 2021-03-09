@@ -47,4 +47,10 @@ OtriumAPI is a simple REST & GraphQL API to facilitate product dashboard.
 
 ## Next
 
-1.  Performance test the API
+1.  Production server running script (Known issue with ts-module-mapper)
+2.  Code coverage
+3.  Performance test the API
+
+## Known Issues
+
+1.  API data validations

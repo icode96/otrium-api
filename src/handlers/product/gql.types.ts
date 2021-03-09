@@ -1,5 +1,4 @@
 import { ArgsType, Field, ObjectType } from 'type-graphql'
-import { TBrand } from './handler.d'
 
 @ArgsType()
 export class ATCreateProduct {
@@ -14,6 +13,33 @@ export class ATCreateProduct {
 
   @Field()
   brandId: number
+}
+
+@ArgsType()
+export class ATGetProduct {
+  @Field({ nullable: true })
+  id?: number
+
+  @Field({ nullable: true })
+  slug?: string
+}
+
+@ArgsType()
+export class ATUpdateProduct {
+  @Field()
+  id: number
+
+  @Field({ nullable: true })
+  name?: string
+
+  @Field({ nullable: true })
+  slug?: string
+
+  @Field({ nullable: true })
+  sku?: string
+
+  @Field({ nullable: true })
+  brandId?: number
 }
 
 @ObjectType()

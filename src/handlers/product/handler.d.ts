@@ -14,16 +14,16 @@ export interface HICreateProduct {
 }
 
 export interface HIGetProduct {
-  id?: string
+  id?: number
   slug?: string
 }
 
 export interface HIUpdateProduct {
-  id: string
+  id: number
   name?: string
   slug?: string
   sku?: string
-  brandId: number
+  brandId?: number
 }
 
 // HI: HandlerResponse

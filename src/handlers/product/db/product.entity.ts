@@ -2,16 +2,12 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm'
-import { TProductStatus } from '@/handlers/product/handler.d'
 import Brand from './brand.entity'
-
-const ProductStatusEnum: Array<TProductStatus> = ['P', 'A']
-const defaultStatus: TProductStatus = 'P'
 
 @Entity()
 class Product {
@@ -21,18 +17,15 @@ class Product {
   @Column()
   name: string
 
-  @Column()
+  @Column({ unique: true })
   slug: string
 
   @Column()
   sku: string
 
-  @OneToOne(() => Brand)
+  @ManyToOne(() => Brand)
   @JoinColumn()
   brand: Brand
-
-  @Column({ type: 'enum', enum: ProductStatusEnum, default: defaultStatus })
-  status: TProductStatus
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: string

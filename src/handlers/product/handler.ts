@@ -1,7 +1,7 @@
 import * as fs from 'fs'
 import * as express from 'express'
 import * as csvParser from 'csv-parse'
-import { throwError } from '@/libs/utils/error'
+import { throwError, throwErrorQL } from '@/libs/utils/error'
 import {
   HICreateBrand,
   HRCreateBrand,
@@ -63,6 +63,34 @@ const handler = {
     } catch (error) {
       const errorCode = throwError(error?.errorCode, error, true)
       res.status(500).json(errorCode)
+    }
+  },
+
+  /**
+   * @handler Create Product v2.0
+   * @param { HICreateProduct }
+   * @returns { HRCreateProduct }
+   */
+  async createProduct_2_0(payload: HICreateProduct): Promise<HRCreateProduct> {
+    try {
+      const { name, slug, sku, brandId }: HICreateProduct = payload
+
+      const brand = await BrandRepository().findOne(brandId)
+      if (!brand) {
+        throwErrorQL('ER.P.001', `Invalid brandId: ${brandId}`)
+      }
+
+      const dataset = {
+        name,
+        slug,
+        sku,
+        brand,
+      }
+
+      const { id }: HRCreateProduct = await ProductRepository().save(dataset)
+      return { id }
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
     }
   },
 
@@ -143,6 +171,33 @@ const handler = {
     } catch (error) {
       const errorCode = throwError(error?.errorCode, error, true)
       res.status(500).json(errorCode)
+    }
+  },
+
+  /**
+   * @handler Get Products v2.0
+   * @param { HICreateProduct }
+   * @returns { HRCreateProduct }
+   */
+  async getProducts_2_0(): Promise<Array<HRGetProduct>> {
+    try {
+      const data = await ProductRepository().find({ relations: ['brand'] })
+
+      const products: Array<HRGetProduct> = data.map((product) => ({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        sku: product.sku,
+        brand: {
+          id: product.brand?.id,
+          name: product.brand?.name,
+          code: product.brand?.code,
+        },
+      }))
+
+      return products
+    } catch (error) {
+      throwErrorQL(error?.gqlCode, error, true)
     }
   },
 

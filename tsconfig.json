@@ -13,7 +13,8 @@
     "baseUrl": ".",
     "paths": {
       "@/libs/*": ["./src/libs/*"],
-      "@/handlers/*": ["./src/handlers/*"]
+      "@/handlers/*": ["./src/handlers/*"],
+      "@/api/*": ["./src/api/*"]
     }
   },
   "exclude": ["node_modules"],
